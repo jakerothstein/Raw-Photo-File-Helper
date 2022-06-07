@@ -22,7 +22,6 @@ func main() {
 	fmt.Println("\nEnter File Location of Items to Be Scanned")
 	var oldLocation string
 	fmt.Scanln(&oldLocation)
-	oldLocation = "G:\\DCIM\\100CANON" //Overides File Location for testing
 
 	fileArr := scanArray(oldLocation, extenTyp, desiredExtenTyp) //Gets all the files with the correct file ending and changes to desired file ending
 
