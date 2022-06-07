@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -22,14 +24,17 @@ func main() {
 	fmt.Println("\nEnter File Location of Items to Be Scanned")
 	var oldLocation string
 	fmt.Scanln(&oldLocation)
+	//oldLocation = "F:\\Photography\\Temp Dumps" //For testing
 
 	fileArr := scanArray(oldLocation, extenTyp, desiredExtenTyp) //Gets all the files with the correct file ending and changes to desired file ending
 
 	fmt.Println("\nItems Successfully Located & Indexed\n")
 
-	copyPaste := getFileCopy(fileArr)
-	fmt.Println(copyPaste)
+	fileData := getFileCopy(fileArr)
+	//fmt.Println(fileData) //
+	writeToFile(fileData) //Calls func to create file with output in downloads folder
 
+	fmt.Println("\nFile saved to Downloads folder")
 }
 
 func scanArray(dir string, typ string, desiredTyp string) []string {
@@ -64,4 +69,16 @@ func getFileCopy(arr []string) string {
 		fileLst = fileLst + "\"" + arr[i] + "\" "
 	}
 	return fileLst
+}
+
+func writeToFile(data string) {
+	homeDir, _ := os.UserHomeDir()
+	path := filepath.Join(homeDir, "Downloads", "output.txt") //Change for where you want the output file to go
+	f, err := os.Create(path)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+	defer f.Close()
+	f.Write([]byte(data))
+
 }
