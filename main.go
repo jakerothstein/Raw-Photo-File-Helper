@@ -25,7 +25,7 @@ func main() {
 
 	fileArr := scanArray(oldLocation, extenTyp, desiredExtenTyp) //Gets all the files with the correct file ending and changes to desired file ending
 
-	fmt.Println("\nItems Successfully Located & Indexed")
+	fmt.Println("\nItems Successfully Located & Indexed\n")
 
 	copyPaste := getFileCopy(fileArr)
 	fmt.Println(copyPaste)
