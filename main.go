@@ -3,27 +3,31 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 )
 
 func main() {
+
 	fmt.Println(" _______  __   __       _______    .___  ___.   ______   ____    ____  _______ .______      \n|   ____||  | |  |     |   ____|   |   \\/   |  /  __  \\  \\   \\  /   / |   ____||   _  \\     \n|  |__   |  | |  |     |  |__      |  \\  /  | |  |  |  |  \\   \\/   /  |  |__   |  |_)  |    \n|   __|  |  | |  |     |   __|     |  |\\/|  | |  |  |  |   \\      /   |   __|  |      /     \n|  |     |  | |  `----.|  |____    |  |  |  | |  `--'  |    \\    /    |  |____ |  |\\  \\----.\n|__|     |__| |_______||_______|   |__|  |__|  \\______/      \\__/     |_______|| _| `._____|\nBy Jake Rothstein")
 
-	fmt.Println("\nEnter File Extension Type to Be Scanned (.raw, .CR3, .png, etc)")
+	fmt.Println("\nEnter File Extension Type to Be Scanned (.JPG, .jpg, .png, etc)")
 	var extenTyp string
 	fmt.Scanln(&extenTyp)
 
-	fmt.Println("\nEnter File Extension Type to Be Changed to (.raw, .CR3, .png, etc)")
+	fmt.Println("\nEnter File Extension Type to Be Changed to (.ORF, .CR3, .NEF, etc)")
 	var desiredExtenTyp string
 	fmt.Scanln(&desiredExtenTyp)
 
 	fmt.Println("\nEnter File Location of Items to Be Scanned")
-	var oldLocation string
-	fmt.Scanln(&oldLocation)
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	oldLocation := scanner.Text()
 	//oldLocation = "F:\\Photography\\Temp Dumps" //For testing
 
 	fileArr := scanArray(oldLocation, extenTyp, desiredExtenTyp) //Gets all the files with the correct file ending and changes to desired file ending
@@ -31,13 +35,14 @@ func main() {
 	fmt.Println("\nItems Successfully Located & Indexed\n")
 
 	fileData := getFileCopy(fileArr)
-	//fmt.Println(fileData) //
 	writeToFile(fileData) //Calls func to create file with output in downloads folder
 
-	fmt.Println("\nFile saved to Downloads folder")
+	fmt.Println("\nFile saved to Downloads folder - Closing program in 10 seconds")
+
+	time.Sleep(10 * time.Second)
 }
 
-func scanArray(dir string, typ string, desiredTyp string) []string {
+func scanArray(dir string, typ string, desiredTyp string) []string { //Scans Array for Files
 	var photoList []string
 
 	files, err := ioutil.ReadDir(dir)
@@ -52,7 +57,7 @@ func scanArray(dir string, typ string, desiredTyp string) []string {
 	return searchArray(photoList, typ, desiredTyp)
 }
 
-func searchArray(arr []string, typ string, desiredTyp string) []string {
+func searchArray(arr []string, typ string, desiredTyp string) []string { //Filers scanned array for specified file types
 	var fileList []string
 	for i := 0; i < len(arr); i++ {
 		if arr[i][len(arr[i])-(len(typ)):] == typ {
@@ -63,7 +68,7 @@ func searchArray(arr []string, typ string, desiredTyp string) []string {
 
 }
 
-func getFileCopy(arr []string) string {
+func getFileCopy(arr []string) string { // Puts array into format for Windows file explorer
 	var fileLst string
 	for i := 0; i < len(arr); i++ {
 		fileLst = fileLst + "\"" + arr[i] + "\" "
@@ -71,7 +76,7 @@ func getFileCopy(arr []string) string {
 	return fileLst
 }
 
-func writeToFile(data string) {
+func writeToFile(data string) { //Writes .txt placed in the downloads folder
 	homeDir, _ := os.UserHomeDir()
 	path := filepath.Join(homeDir, "Downloads", "output.txt") //Change for where you want the output file to go
 	f, err := os.Create(path)
