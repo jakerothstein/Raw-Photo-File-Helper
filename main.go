@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 )
 
@@ -24,13 +25,13 @@ func main() {
 	var desiredExtenTyp string
 	fmt.Scanln(&desiredExtenTyp)
 
-	fmt.Println("\nEnter File Location of Items to Be Scanned")
+	fmt.Println("\nEnter File Location of Items to Be Scanned (C:\\\\Folder\\\\Folder\\\\Folder)")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
-	oldLocation := scanner.Text()
+	Location := scanner.Text()
 	//oldLocation = "F:\\Photography\\Temp Dumps" //For testing
 
-	fileArr := scanArray(oldLocation, extenTyp, desiredExtenTyp) //Gets all the files with the correct file ending and changes to desired file ending
+	fileArr := scanArray(Location, extenTyp, desiredExtenTyp) //Gets all the files with the correct file ending and changes to desired file ending
 
 	fmt.Println("\nItems Successfully Located & Indexed\n")
 
@@ -69,9 +70,20 @@ func searchArray(arr []string, typ string, desiredTyp string) []string { //Filer
 }
 
 func getFileCopy(arr []string) string { // Puts array into format for Windows file explorer
+	var indentCnt = 0
+	var rowCnt = 1
 	var fileLst string
+	fileLst = fileLst + strconv.Itoa(rowCnt) + ") "
 	for i := 0; i < len(arr); i++ {
+		indentCnt++
 		fileLst = fileLst + "\"" + arr[i] + "\" "
+		if indentCnt > 16 {
+			fileLst = fileLst + "\n\n"
+			rowCnt++
+			fileLst = fileLst + strconv.Itoa(rowCnt) + ") "
+			indentCnt = 0
+
+		}
 	}
 	return fileLst
 }
