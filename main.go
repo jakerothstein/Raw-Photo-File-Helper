@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -21,7 +22,7 @@ func main() {
 	var extenTyp string
 	fmt.Scanln(&extenTyp)
 
-	fmt.Println("\nEnter File Extension Type to Be Changed to (.ORF, .CR3, .NEF, etc)")
+	fmt.Println("\nEnter Target File Extension Type (.ORF, .CR3, .NEF, etc)")
 	var desiredExtenTyp string
 	fmt.Scanln(&desiredExtenTyp)
 
@@ -33,12 +34,23 @@ func main() {
 
 	fileArr := scanArray(Location, extenTyp, desiredExtenTyp) //Gets all the files with the correct file ending and changes to desired file ending
 
-	fmt.Println("\nItems Successfully Located & Indexed\n")
+	fmt.Println("\nItems Successfully Located & Indexed")
+	fmt.Println("\nEnter Target File Location (C:\\\\Folder\\\\Folder\\\\Folder)")
+	scanner.Scan()
+	NewLocation := scanner.Text()
 
-	fileData := getFileCopy(fileArr)
-	writeToFile(fileData) //Calls func to create file with output in downloads folder
+	moveFiles(fileArr, Location, NewLocation, desiredExtenTyp)
 
-	fmt.Println("\nFile saved to Downloads folder - Closing program in 10 seconds")
+	fmt.Println("\nWould you like to download a moved files Log? (Y/N)")
+	var response string
+	fmt.Scanln(&response)
+	if strings.ToUpper(response) == "Y" {
+		fileData := getFileCopy(fileArr)
+		writeToFile(fileData) //Calls func to create file with output in downloads folder
+		fmt.Println("\nFile saved to Downloads folder - Closing program in 10 seconds")
+	} else {
+		fmt.Println("\nClosing Program in 10 seconds")
+	}
 
 	time.Sleep(10 * time.Second)
 }
@@ -69,6 +81,15 @@ func searchArray(arr []string, typ string, desiredTyp string) []string { //Filer
 
 }
 
+func moveFiles(arr []string, oldLocation string, newLocation string, extensionType string) {
+	for i := range arr {
+		err := os.Rename(newLocation+"\\"+arr[i], oldLocation+"\\"+arr[i])
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+}
+
 func getFileCopy(arr []string) string { // Puts array into format for Windows file explorer
 	var indentCnt = 0
 	var rowCnt = 1
@@ -90,7 +111,7 @@ func getFileCopy(arr []string) string { // Puts array into format for Windows fi
 
 func writeToFile(data string) { //Writes .txt placed in the downloads folder
 	homeDir, _ := os.UserHomeDir()
-	path := filepath.Join(homeDir, "Downloads", "output.txt") //Change for where you want the output file to go
+	path := filepath.Join(homeDir, "Downloads", "log.txt") //Change for where you want the output file to go
 	f, err := os.Create(path)
 	if err != nil {
 		log.Fatal(err.Error())
