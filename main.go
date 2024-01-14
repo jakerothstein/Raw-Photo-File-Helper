@@ -10,7 +10,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -49,16 +48,17 @@ func main() {
 		fmt.Println("Error:", err)
 		return
 	}
-	fmt.Println("\nMoving Files to Target Location (This make take a minute)")
+	fmt.Println("\nMoving Files to Target Location (This May Take a Minute)")
 
-	moveFiles(fileArr, Location, NewLocation)
+	FaledFiles := moveFiles(fileArr, Location, NewLocation)
+	fmt.Println(FaledFiles)
 
 	fmt.Println("\nWould you like to download a moved files Log? (Y/N)")
 	var response string
 	fmt.Scanln(&response)
 	if strings.ToUpper(response) == "Y" {
-		fileData := getFileCopy(fileArr)
-		writeToFile(fileData) //Calls func to create file with output in downloads folder
+		fileData, failedFiles := getFileCopy(fileArr, FaledFiles)
+		writeToFile(fileData, failedFiles) //Calls func to create file with output in downloads folder
 		fmt.Println("\nFile saved to Downloads folder - Closing program in 10 seconds")
 	} else {
 		fmt.Println("\nClosing Program in 10 seconds")
@@ -93,7 +93,7 @@ func searchArray(arr []string, typ string, desiredTyp string) []string { //Filer
 
 }
 
-func moveFiles(arr []string, oldLocation string, newLocation string) {
+func moveFiles(arr []string, oldLocation string, newLocation string) (failedFiles []string) {
 	for i := range arr {
 		sourceFile := filepath.Join(oldLocation, arr[i])
 		destFile := filepath.Join(newLocation, arr[i])
@@ -101,6 +101,7 @@ func moveFiles(arr []string, oldLocation string, newLocation string) {
 		source, err := os.Open(sourceFile)
 		if err != nil {
 			log.Printf("Error opening file %s: %v", sourceFile, err)
+			failedFiles = append(failedFiles, arr[i])
 			continue // Skip to the next iteration
 		}
 		defer source.Close()
@@ -108,6 +109,7 @@ func moveFiles(arr []string, oldLocation string, newLocation string) {
 		destination, err := os.Create(destFile)
 		if err != nil {
 			log.Printf("Error creating file %s: %v", destFile, err)
+			failedFiles = append(failedFiles, arr[i])
 			continue // Skip to the next iteration
 		}
 		defer destination.Close()
@@ -115,38 +117,66 @@ func moveFiles(arr []string, oldLocation string, newLocation string) {
 		_, err = io.Copy(destination, source)
 		if err != nil {
 			log.Printf("Error copying data for file %s: %v", sourceFile, err)
+			failedFiles = append(failedFiles, arr[i])
 			continue // Skip to the next iteration
 		}
 	}
+	return failedFiles
 }
-
-func getFileCopy(arr []string) string { // Puts array into format for Windows file explorer
-	var indentCnt = 0
-	var rowCnt = 1
-	var fileLst string
-	fileLst = fileLst + strconv.Itoa(rowCnt) + ") "
-	for i := 0; i < len(arr); i++ {
-		indentCnt++
-		fileLst = fileLst + "\"" + arr[i] + "\" "
-		if indentCnt > 16 {
-			fileLst = fileLst + "\n\n"
-			rowCnt++
-			fileLst = fileLst + strconv.Itoa(rowCnt) + ") "
-			indentCnt = 0
-
+func StringInSlice(str string, list []string) bool {
+	for _, s := range list {
+		if str == s {
+			return true
 		}
 	}
-	return fileLst
+	return false
+}
+func getFileCopy(arr, FailedFiles []string) (fileList, failedFilesOut string) { // Puts array into format for Windows file explorer
+	var fileListStr string
+	var failedFilesStr string
+	fileListStr = fileListStr + "Files Successfully Moved:\n"
+	failedFilesStr = failedFilesStr + "Files Failed to Move:\n"
+
+	for i := 0; i < len(arr); i++ {
+		if StringInSlice(arr[i], FailedFiles) {
+			failedFilesStr += "\"" + arr[i] + "\","
+		} else {
+			fileListStr += "\"" + arr[i] + "\","
+		}
+	}
+
+	// Remove the trailing commas
+	fileListStr = strings.TrimRight(fileListStr, ",")
+	failedFilesStr = strings.TrimRight(failedFilesStr, ",")
+
+	return fileListStr, failedFilesStr
 }
 
-func writeToFile(data string) { //Writes .txt placed in the downloads folder
+func writeToFile(data, failedFiles string) {
 	homeDir, _ := os.UserHomeDir()
-	path := filepath.Join(homeDir, "Downloads", "log.txt") //Change for where you want the output file to go
-	f, err := os.Create(path)
+	downloadsPath := filepath.Join(homeDir, "Downloads")
+	baseFileName := "log.txt"
+	filePath := filepath.Join(downloadsPath, baseFileName)
+
+	// Check if the file already exists
+	_, err := os.Stat(filePath)
+	counter := 1
+
+	// If file exists, create a new file with a different name
+	for !os.IsNotExist(err) {
+		newFileName := fmt.Sprintf("log_%d.txt", counter)
+		filePath = filepath.Join(downloadsPath, newFileName)
+		counter++
+		_, err = os.Stat(filePath)
+	}
+
+	f, err := os.Create(filePath)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	defer f.Close()
-	f.Write([]byte(data))
 
+	f.Write([]byte(data))
+	f.Write([]byte("\n\n"))
+	f.Write([]byte(failedFiles))
 }
