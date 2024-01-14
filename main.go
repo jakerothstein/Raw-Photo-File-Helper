@@ -35,7 +35,6 @@ func main() {
 
 	fileArr := scanArray(NewLocation, extenTyp, desiredExtenTyp) //Gets all the files with the correct file ending and changes to desired file ending
 	fmt.Println("\nFiles to be Indexed and Moved:")
-	fmt.Println(fileArr)
 
 	//RawLocation, err := dialog.Directory().Title("Enter Location of Files to be Copied").Browse()
 	//if err != nil {
