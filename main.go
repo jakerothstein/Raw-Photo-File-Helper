@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/schollz/progressbar/v3"
 	"github.com/sqweek/dialog"
 	"io"
 	"io/ioutil"
@@ -94,10 +95,13 @@ func searchArray(arr []string, typ string, desiredTyp string) []string { //Filer
 }
 
 func moveFiles(arr []string, oldLocation string, newLocation string) (failedFiles []string) {
+	bar := progressbar.Default(int64(len(arr)))
+
 	for i := range arr {
 		sourceFile := filepath.Join(oldLocation, arr[i])
 		destFile := filepath.Join(newLocation, arr[i])
-
+		// Increment progress bar
+		bar.Add(1)
 		source, err := os.Open(sourceFile)
 		if err != nil {
 			log.Printf("Error opening file %s: %v", sourceFile, err)
@@ -114,15 +118,22 @@ func moveFiles(arr []string, oldLocation string, newLocation string) (failedFile
 		}
 		defer destination.Close()
 
-		_, err = io.Copy(destination, source)
+		// Use io.CopyBuffer for better performance
+		_, err = io.CopyBuffer(destination, source, make([]byte, 1024*1024))
 		if err != nil {
 			log.Printf("Error copying data for file %s: %v", sourceFile, err)
 			failedFiles = append(failedFiles, arr[i])
 			continue // Skip to the next iteration
 		}
+
 	}
+
+	// Finish progress bar
+	bar.Finish()
+
 	return failedFiles
 }
+
 func StringInSlice(str string, list []string) bool {
 	for _, s := range list {
 		if str == s {
