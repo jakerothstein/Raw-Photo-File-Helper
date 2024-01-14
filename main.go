@@ -3,8 +3,9 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
+	"github.com/sqweek/dialog"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -26,20 +27,31 @@ func main() {
 	var desiredExtenTyp string
 	fmt.Scanln(&desiredExtenTyp)
 
-	fmt.Println("\nEnter File Location of Items to Be Scanned (C:\\\\Folder\\\\Folder\\\\Folder)")
-	scanner := bufio.NewScanner(os.Stdin)
-	scanner.Scan()
-	Location := scanner.Text()
-	//oldLocation = "F:\\Photography\\Temp Dumps" //For testing
+	NewLocation, err := dialog.Directory().Title("Enter File Location of Items to Be Scanned").Browse()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
 
-	fileArr := scanArray(Location, extenTyp, desiredExtenTyp) //Gets all the files with the correct file ending and changes to desired file ending
+	fileArr := scanArray(NewLocation, extenTyp, desiredExtenTyp) //Gets all the files with the correct file ending and changes to desired file ending
+	fmt.Println("\nFiles to be Indexed and Moved:")
+	fmt.Println(fileArr)
+
+	//RawLocation, err := dialog.Directory().Title("Enter Location of Files to be Copied").Browse()
+	//if err != nil {
+	//	fmt.Println("Error:", err)
+	//	return
+	//}
 
 	fmt.Println("\nItems Successfully Located & Indexed")
-	fmt.Println("\nEnter Target File Location (C:\\\\Folder\\\\Folder\\\\Folder)")
-	scanner.Scan()
-	NewLocation := scanner.Text()
+	Location, err := dialog.Directory().Title("Enter Target File Location").Browse()
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
+	fmt.Println("\nMoving Files to Target Location (This make take a minute)")
 
-	moveFiles(fileArr, Location, NewLocation, desiredExtenTyp)
+	moveFiles(fileArr, Location, NewLocation)
 
 	fmt.Println("\nWould you like to download a moved files Log? (Y/N)")
 	var response string
@@ -81,11 +93,29 @@ func searchArray(arr []string, typ string, desiredTyp string) []string { //Filer
 
 }
 
-func moveFiles(arr []string, oldLocation string, newLocation string, extensionType string) {
+func moveFiles(arr []string, oldLocation string, newLocation string) {
 	for i := range arr {
-		err := os.Rename(newLocation+"\\"+arr[i], oldLocation+"\\"+arr[i])
+		sourceFile := filepath.Join(oldLocation, arr[i])
+		destFile := filepath.Join(newLocation, arr[i])
+
+		source, err := os.Open(sourceFile)
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("Error opening file %s: %v", sourceFile, err)
+			continue // Skip to the next iteration
+		}
+		defer source.Close()
+
+		destination, err := os.Create(destFile)
+		if err != nil {
+			log.Printf("Error creating file %s: %v", destFile, err)
+			continue // Skip to the next iteration
+		}
+		defer destination.Close()
+
+		_, err = io.Copy(destination, source)
+		if err != nil {
+			log.Printf("Error copying data for file %s: %v", sourceFile, err)
+			continue // Skip to the next iteration
 		}
 	}
 }
