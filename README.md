@@ -5,5 +5,3 @@ I wrote this code to quickly create an input string for Lightroom to mass import
 You first put the file type that will be scanned for  example a .JPG file, and then you input the file you want to change it to, for example .CR3. 
 
 The program will then ask for a directory to acess the files from, then it will read the files and output a string that can be put into file explorer -- this lets you easily input your raw files into Adobe Lightroom.
-
-This program runs the best using GoLang 
